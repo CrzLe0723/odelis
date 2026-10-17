@@ -59,7 +59,9 @@
           </div>
           <form id="taskForm" class="add-form">
             <input class="field" id="title" maxlength="140" placeholder="What needs your attention?" aria-label="Task name" required>
-            <select class="field" id="category" aria-label="Task category"></select>
+            <select class="field" id="category" aria-label="Task category">
+              <option>School</option><option>Acadeca</option><option>Personal</option><option>Project</option><option>Other</option>
+            </select>
             <select class="field" id="priority" aria-label="Task priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
             <input class="field" id="deadline" type="date" aria-label="Due date" title="Optional due date">
             <button class="primary" type="submit">+ Add task</button>
@@ -68,8 +70,9 @@
             <button class="filter active" data-filter="All">All</button>
             <button class="filter" data-filter="Active">Active</button>
             <button class="filter" data-filter="Today">Today</button>
+            <button class="filter" data-filter="School">School</button>
+            <button class="filter" data-filter="Acadeca">Acadeca</button>
             <button class="filter" data-filter="Completed">Completed</button>
-            
           </div>
           <div class="task-list" id="tasks" aria-live="polite"></div>
           <p class="panel-subtitle" style="margin-top:14px">Tasks are saved in this browser on this device. Export a backup to keep a copy.</p>
@@ -133,12 +136,7 @@
         </details>
       </section>
       <section class="panel agenda-panel"><div class="panel-head"><div><h2>Agenda</h2><p class="panel-subtitle">A compact list of what's scheduled, in time order.</p></div><span id="agendaCount" class="agenda-count"></span></div><div id="weekAgenda" class="week-agenda" aria-live="polite"></div></section>
-      <section class="panel"><div class="panel-head"><div><h2>What's on your plate?</h2><p class="panel-subtitle">Your tasks, ordered by what needs attention.</p></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="text-button" type="button" data-open-task-categories>Manage categories</button><button class="text-button" data-goto="overview">Add a task ↗</button></div></div><div id="plannerSummary"></div><div class="planner-controls"><label class="field-label" for="plannerView">Show</label><select class="field" id="plannerView"><option value="upcoming">Upcoming &amp; overdue</option><option value="all">All tasks</option><option value="completed">Completed</option></select></div><div id="plannerTasks" class="task-list" aria-live="polite"></div>          <section class="category-manager" id="taskCategoryManager" hidden>
-            <strong>Task categories</strong><p>Customize how you organize tasks.</p>
-            <form class="category-add-form" id="taskCategoryForm"><input class="field" id="newTaskCategory" maxlength="32" placeholder="New category name" aria-label="New task category" required><button class="secondary-button" type="submit">Add</button></form>
-            <div class="category-options" id="taskCategoryOptions"></div>
-          </section>
-</section>
+      <section class="panel"><div class="panel-head"><div><h2>What's on your plate?</h2><p class="panel-subtitle">Your tasks, ordered by what needs attention.</p></div><button class="text-button" data-goto="overview">Add a task ↗</button></div><div id="plannerSummary"></div><div class="planner-controls"><label class="field-label" for="plannerView">Show</label><select class="field" id="plannerView"><option value="upcoming">Upcoming &amp; overdue</option><option value="all">All tasks</option><option value="completed">Completed</option></select></div><div id="plannerTasks" class="task-list" aria-live="polite"></div></section>
     </section>
 
     <section class="page-panel" id="page-library">
@@ -153,7 +151,7 @@
             <label class="field-label" for="noteBody">Your note</label>
             <textarea class="field note-body-field" id="noteBody" maxlength="12000" rows="7" placeholder="Write an idea, a question, something you learned…" ></textarea>
             <div class="note-form-row">
-              <div class="note-category-wrap"><label class="field-label" for="noteCategory">Collection</label><select class="field" id="noteCategory"></select></div>
+              <div class="note-category-wrap"><label class="field-label" for="noteCategory">Collection</label><select class="field" id="noteCategory"><option>Ideas</option><option>School</option><option>Acadeca</option><option>Projects</option><option>Reading</option><option>Reference</option></select></div>
               <label class="pin-toggle"><input id="notePinned" type="checkbox"><span>Pin this note</span></label>
             </div>
             <div class="note-actions"><button class="primary" type="submit" id="saveNoteButton">Save note</button><button class="text-button" type="button" id="cancelNoteEdit" hidden>Cancel edit</button><span class="note-save-status" id="noteSaveStatus" aria-live="polite"></span></div>
@@ -166,13 +164,13 @@
           <div class="note-collections" id="noteCollections" aria-label="Filter notes by collection">
             <button class="filter active" type="button" data-note-filter="All">All notes</button>
             <button class="filter" type="button" data-note-filter="Pinned">Pinned</button>
-            <button class="filter" type="button" data-open-note-categories>Manage collections</button>
+            <button class="filter" type="button" data-note-filter="Ideas">Ideas</button>
+            <button class="filter" type="button" data-note-filter="School">School</button>
+            <button class="filter" type="button" data-note-filter="Acadeca">Acadeca</button>
+            <button class="filter" type="button" data-note-filter="Projects">Projects</button>
+            <button class="filter" type="button" data-note-filter="Reading">Reading</button>
+            <button class="filter" type="button" data-note-filter="Reference">Reference</button>
           </div>
-          <section class="category-manager" id="noteCategoryManager" hidden>
-            <strong>Note collections</strong><p>Customize how you organize notes.</p>
-            <form class="category-add-form" id="noteCategoryForm"><input class="field" id="newNoteCategory" maxlength="32" placeholder="New collection name" aria-label="New note collection" required><button class="secondary-button" type="submit">Add</button></form>
-            <div class="category-options" id="noteCategoryOptions"></div>
-          </section>
           <div id="notesList" class="notes-list" aria-live="polite"></div>
           <p class="panel-subtitle note-storage-hint">Notes are saved in this browser on this device. Export a backup to keep a copy.</p>
           <div class="note-import-row"><button class="text-button" id="importNotesButton" type="button">Import notes backup</button><input id="importNotesFile" type="file" accept=".json,application/json" hidden></div>
