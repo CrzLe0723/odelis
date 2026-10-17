@@ -2,6 +2,9 @@
   const LEGACY_KEY = "studyos-tasks-v1";
   const $ = id => document.getElementById(id);
   const TASK_CATEGORIES_KEY = "odelis-task-categories-v1";
+  const SCHEDULE_CATEGORIES_KEY = "odelis-schedule-categories-v1";
+  const DEFAULT_SCHEDULE_CATEGORIES = ["Study", "Break", "Activity", "Other"];
+  let scheduleCategories = loadCategories(SCHEDULE_CATEGORIES_KEY, DEFAULT_SCHEDULE_CATEGORIES);
   const DEFAULT_TASK_CATEGORIES = ["School", "Personal", "Project", "Other", "Sports"];
   let taskCategories = loadCategories(TASK_CATEGORIES_KEY, DEFAULT_TASK_CATEGORIES);
   let tasks = load();
@@ -57,6 +60,9 @@
   $("today").textContent = new Date().toLocaleDateString(undefined, {weekday:"long", month:"long", day:"numeric"});
   tasks.forEach(t => { if (!taskCategories.includes(t.category)) taskCategories.push(t.category); });
   fillCategorySelect($("category"), taskCategories);
+  schedule.forEach(item => { if (!scheduleCategories.includes(item.category)) scheduleCategories.push(item.category); });
+  fillCategorySelect($("scheduleCategory"), scheduleCategories);
+  renderScheduleCategoryManager();
   renderTaskFilters(); renderTaskCategoryManager();
   if (localStorage.getItem(KEY) === null && localStorage.getItem(LEGACY_KEY) !== null) save();
 
@@ -70,7 +76,11 @@
   });
 
   $("filters").addEventListener("click", e => {
-    if (e.target.closest("[data-open-task-categories]")) { $("taskCategoryManager").hidden = !$("taskCategoryManager").hidden; return; }
+    if (e.target.closest("[data-open-task-categories]")) {
+      $("taskCategoryManager").hidden = false;
+      $("taskCategoryManager").scrollIntoView({behavior:"smooth",block:"center"});
+      return;
+    }
     const button = e.target.closest("[data-filter]");
     if (!button) return;
     filter = button.dataset.filter; render();
@@ -342,6 +352,29 @@
       </article>`;
     }).join("") : `<div class="empty"><div class="empty-symbol">∿</div>No time blocks this week yet. Add one above to give a task or break a place in your schedule.</div>`;
   }
+
+  function renderScheduleCategoryManager() {
+    fillCategorySelect($("scheduleCategory"), scheduleCategories, $("scheduleCategory").value);
+    $("scheduleCategoryOptions").innerHTML = scheduleCategories.map(name => {
+      const used = schedule.some(item => item.category === name);
+      return "<div class=\\"category-option\\"><span>" + esc(name) + (used ? " · in use" : "") + "</span><button type=\\"button\\" data-remove-schedule-category=\\"" + esc(name) + "\\"" + (used || scheduleCategories.length < 2 ? " disabled" : "") + " aria-label=\\"Remove calendar type " + esc(name) + "\\">×</button></div>";
+    }).join("");
+    $("scheduleCategoryLegend").innerHTML = scheduleCategories.map((name,i) => "<span><i class=\\"schedule-dot " + ["study","break","activity","other"][i % 4] + "\\"></i>" + esc(name) + "</span>").join("");
+  }
+  $("scheduleCategoryForm").addEventListener("submit", event => {
+    event.preventDefault(); const input = $("newScheduleCategory"), name = input.value.trim();
+    if (!name || scheduleCategories.some(v => v.toLowerCase() === name.toLowerCase())) { input.setCustomValidity(name ? "That type already exists." : "Enter a type name."); input.reportValidity(); return; }
+    scheduleCategories.push(name);
+    if (saveCategories(SCHEDULE_CATEGORIES_KEY, scheduleCategories)) { input.value = ""; input.setCustomValidity(""); fillCategorySelect($("scheduleCategory"), scheduleCategories, name); renderScheduleCategoryManager(); } else scheduleCategories.pop();
+  });
+  $("newScheduleCategory").addEventListener("input", e => e.target.setCustomValidity(""));
+  $("scheduleCategoryOptions").addEventListener("click", event => {
+    const button = event.target.closest("[data-remove-schedule-category]"); if (!button) return;
+    const name = button.dataset.removeScheduleCategory;
+    if (schedule.some(item => item.category === name) || scheduleCategories.length < 2) return;
+    const next = scheduleCategories.filter(v => v !== name);
+    if (saveCategories(SCHEDULE_CATEGORIES_KEY, next)) { scheduleCategories = next; renderScheduleCategoryManager(); }
+  });
 
   $("scheduleForm").addEventListener("submit", event => {
     event.preventDefault();
