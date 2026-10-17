@@ -60,6 +60,7 @@
           <form id="taskForm" class="add-form">
             <input class="field" id="title" maxlength="140" placeholder="What needs your attention?" aria-label="Task name" required>
             <select class="field" id="category" aria-label="Task category"></select>
+            <button class="text-button" type="button" data-open-task-categories>Manage categories</button>
             <select class="field" id="priority" aria-label="Task priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
             <input class="field" id="deadline" type="date" aria-label="Due date" title="Optional due date">
             <button class="primary" type="submit">+ Add task</button>
@@ -115,7 +116,12 @@
           <div class="week-range" id="weekRange" aria-live="polite"></div>
         </div>
         <div id="weekGrid" class="week-grid" aria-label="Weekly calendar"></div>
-        <div class="week-legend"><span><i class="schedule-dot study"></i>Study</span><span><i class="schedule-dot break"></i>Break</span><span><i class="schedule-dot activity"></i>Activity</span><span><i class="schedule-dot other"></i>Other</span></div>
+        <div class="week-legend" id="scheduleCategoryLegend"></div>
+          <details class="category-manager schedule-category-manager" id="scheduleCategoryManager">
+            <summary>Manage calendar types</summary><p>Add types such as Study, Break, Sports, or Music.</p>
+            <form class="category-add-form" id="scheduleCategoryForm"><input class="field" id="newScheduleCategory" maxlength="32" placeholder="New calendar type" aria-label="New calendar type" required><button class="secondary-button" type="submit">Add</button></form>
+            <div class="category-options" id="scheduleCategoryOptions"></div>
+          </details>
         <details class="schedule-editor" id="scheduleEditor" open>
           <summary id="scheduleEditorSummary">Add a time block</summary>
           <form id="scheduleForm" class="schedule-form">
@@ -124,7 +130,7 @@
             <input class="field" id="scheduleTitle" maxlength="120" placeholder="e.g. Algebra practice" required>
             <div class="schedule-fields">
               <div><label class="field-label" for="scheduleDate">Date</label><input class="field" id="scheduleDate" type="date" required></div>
-              <div><label class="field-label" for="scheduleCategory">Type</label><select class="field" id="scheduleCategory"><option value="Study">Study</option><option value="Break">Break</option><option value="Activity">Activity</option><option value="Other">Other</option></select></div>
+              <div><label class="field-label" for="scheduleCategory">Type</label><select class="field" id="scheduleCategory"></select></div>
               <div><label class="field-label" for="scheduleStart">Starts</label><input class="field" id="scheduleStart" type="time" value="16:00" required></div>
               <div><label class="field-label" for="scheduleEnd">Ends</label><input class="field" id="scheduleEnd" type="time" value="16:30" required></div>
             </div>
