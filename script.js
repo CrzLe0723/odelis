@@ -1,8 +1,27 @@
   const KEY = "odelis-tasks-v1";
   const LEGACY_KEY = "studyos-tasks-v1";
   const $ = id => document.getElementById(id);
+  const TASK_CATEGORIES_KEY = "odelis-task-categories-v1";
+  const DEFAULT_TASK_CATEGORIES = ["School", "Personal", "Project", "Other", "Sports"];
+  let taskCategories = loadCategories(TASK_CATEGORIES_KEY, DEFAULT_TASK_CATEGORIES);
   let tasks = load();
   let filter = "All";
+
+  function loadCategories(key, defaults) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || "null");
+      return Array.isArray(value) ? [...new Set(value.filter(v => typeof v === "string" && v.trim()).map(v => v.trim()).slice(0, 100))] : [...defaults];
+    } catch { return [...defaults]; }
+  }
+  function saveCategories(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch { alert("Odelis could not save your categories in this browser."); return false; }
+  }
+  function fillCategorySelect(select, categories, current) {
+    const all = [...new Set([...categories, ...(current && !categories.includes(current) ? [current] : [])])];
+    select.innerHTML = all.map(v => "<option value=\"" + esc(v) + "\">" + esc(v) + "</option>").join("");
+    if (current && all.includes(current)) select.value = current;
+  }
 
   function load() {
     try {
@@ -10,7 +29,7 @@
       const old = current === null ? localStorage.getItem(LEGACY_KEY) : null;
       const data = JSON.parse(current ?? old ?? "[]");
       return Array.isArray(data) ? data.filter(t => t && typeof t.id === "string" && typeof t.title === "string").map(t => ({
-        id: t.id, title: t.title, category: ["School","Acadeca","Personal","Project","Other","Sports"].includes(t.category) ? t.category : "Other",
+        id: t.id, title: t.title, category: typeof t.category === "string" && t.category.trim() ? t.category : "Other",
         priority: ["High","Medium","Low"].includes(t.priority) ? t.priority : "Medium",
         deadline: typeof t.deadline === "string" ? t.deadline : "",
         duration: Number.isFinite(Number(t.duration)) ? Number(t.duration) : 30,
@@ -36,6 +55,9 @@
   function overdue(t) { return !t.done && t.deadline && t.deadline < todayString(); }
 
   $("today").textContent = new Date().toLocaleDateString(undefined, {weekday:"long", month:"long", day:"numeric"});
+  tasks.forEach(t => { if (!taskCategories.includes(t.category)) taskCategories.push(t.category); });
+  fillCategorySelect($("category"), taskCategories);
+  renderTaskFilters(); renderTaskCategoryManager();
   if (localStorage.getItem(KEY) === null && localStorage.getItem(LEGACY_KEY) !== null) save();
 
   $("taskForm").addEventListener("submit", e => {
@@ -48,10 +70,40 @@
   });
 
   $("filters").addEventListener("click", e => {
+    if (e.target.closest("[data-open-task-categories]")) { $("taskCategoryManager").hidden = !$("taskCategoryManager").hidden; return; }
     const button = e.target.closest("[data-filter]");
     if (!button) return;
-    filter = button.dataset.filter;
-    render();
+    filter = button.dataset.filter; render();
+  });
+  function renderTaskFilters() {
+    $("filters").querySelectorAll("[data-filter-dynamic]").forEach(b => b.remove());
+    const anchor = $("filters").querySelector('[data-filter="Completed"]');
+    taskCategories.forEach(name => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "filter";
+      b.dataset.filter = name; b.dataset.filterDynamic = "true"; b.textContent = name;
+      $("filters").insertBefore(b, anchor);
+    });
+  }
+  function renderTaskCategoryManager() {
+    fillCategorySelect($("category"), taskCategories, $("category").value);
+    $("taskCategoryOptions").innerHTML = taskCategories.map(name => {
+      const used = tasks.some(t => t.category === name);
+      return "<div class=\"category-option\"><span>" + esc(name) + (used ? " · in use" : "") + "</span><button type=\"button\" data-remove-task-category=\"" + esc(name) + "\"" + (used || taskCategories.length < 2 ? " disabled" : "") + " aria-label=\"Remove category " + esc(name) + "\">×</button></div>";
+    }).join("");
+  }
+  $("taskCategoryForm").addEventListener("submit", e => {
+    e.preventDefault(); const input = $("newTaskCategory"); const name = input.value.trim();
+    if (!name || taskCategories.some(v => v.toLowerCase() === name.toLowerCase())) { input.setCustomValidity(name ? "That category already exists." : "Enter a category name."); input.reportValidity(); return; }
+    taskCategories.push(name);
+    if (saveCategories(TASK_CATEGORIES_KEY, taskCategories)) { input.value = ""; input.setCustomValidity(""); fillCategorySelect($("category"), taskCategories, name); renderTaskFilters(); renderTaskCategoryManager(); render(); } else taskCategories.pop();
+  });
+  $("newTaskCategory").addEventListener("input", e => e.target.setCustomValidity(""));
+  $("taskCategoryOptions").addEventListener("click", e => {
+    const b = e.target.closest("[data-remove-task-category]"); if (!b) return;
+    const name = b.dataset.removeTaskCategory;
+    if (tasks.some(t => t.category === name) || taskCategories.length < 2) return;
+    const next = taskCategories.filter(v => v !== name);
+    if (saveCategories(TASK_CATEGORIES_KEY, next)) { taskCategories = next; if (filter === name) filter = "All"; renderTaskFilters(); renderTaskCategoryManager(); render(); }
   });
 
   $("tasks").addEventListener("change", e => {
@@ -101,12 +153,13 @@
     $("due").textContent = active.filter(t => t.deadline === today).length;
     $("completed").textContent = tasks.filter(t => t.done).length;
 
+    renderTaskFilters();
     document.querySelectorAll("[data-filter]").forEach(b => b.classList.toggle("active", b.dataset.filter === filter));
     const visible = tasks.filter(t => {
       if (filter === "Active") return !t.done;
       if (filter === "Completed") return t.done;
       if (filter === "Today") return !t.done && t.deadline === today;
-      if (["School","Acadeca","Personal","Project","Other","Sports"].includes(filter)) return t.category === filter;
+      if (taskCategories.includes(filter) || tasks.some(t => t.category === filter)) return t.category === filter;
       return true;
     }).sort((a,b) => {
       if (a.done !== b.done) return Number(a.done)-Number(b.done);
@@ -371,6 +424,9 @@
 
 // Notes & Library — kept locally in this browser, separate from task data.
 const NOTES_KEY = "odelis-notes-v1";
+const NOTE_CATEGORIES_KEY = "odelis-note-categories-v1";
+const DEFAULT_NOTE_CATEGORIES = ["Ideas", "School", "Projects", "Reading", "Reference"];
+let noteCategories = loadCategories(NOTE_CATEGORIES_KEY, DEFAULT_NOTE_CATEGORIES);
 let notes = loadNotes();
 let noteFilter = "All";
 
@@ -381,7 +437,7 @@ function loadNotes() {
       id: n.id,
       title: n.title.slice(0, 120),
       body: typeof n.body === "string" ? n.body.slice(0, 12000) : "",
-      category: ["Ideas","School","Acadeca","Projects","Reading","Reference"].includes(n.category) ? n.category : "Ideas",
+      category: typeof n.category === "string" && n.category.trim() ? n.category : "Ideas",
       pinned: Boolean(n.pinned),
       updatedAt: typeof n.updatedAt === "string" ? n.updatedAt : new Date().toISOString()
     })) : [];
@@ -413,6 +469,7 @@ function resetNoteForm() {
 }
 
 function renderNotes() {
+  renderNoteFilters(); renderNoteCategoryManager();
   const query = $("noteSearch").value.trim().toLocaleLowerCase();
   const visible = notes.filter(note => {
     const matchesFilter = noteFilter === "All" || (noteFilter === "Pinned" ? note.pinned : note.category === noteFilter);
@@ -435,6 +492,45 @@ function renderNotes() {
       </div>
     </article>`).join("") : `<div class="notes-empty"><div class="empty-symbol">∿</div><strong>${query || noteFilter !== "All" ? "No notes found." : "A little space for your ideas."}</strong><span>${query || noteFilter !== "All" ? "Try a different search or collection." : "Write your first note above. It will be here when you return on this device."}</span></div>`;
 }
+
+notes.forEach(n => { if (!noteCategories.includes(n.category)) noteCategories.push(n.category); });
+
+function renderNoteFilters() {
+  $("noteCollections").querySelectorAll("[data-note-filter-dynamic]").forEach(b => b.remove());
+  const anchor = $("noteCollections").querySelector('[data-note-filter="Pinned"]');
+  noteCategories.forEach(name => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "filter";
+    b.dataset.noteFilter = name; b.dataset.noteFilterDynamic = "true"; b.textContent = name;
+    $("noteCollections").insertBefore(b, anchor.nextSibling);
+  });
+  fillCategorySelect($("noteCategory"), noteCategories, $("noteCategory").value);
+}
+function renderNoteCategoryManager() {
+  fillCategorySelect($("noteCategory"), noteCategories, $("noteCategory").value);
+  $("noteCategoryOptions").innerHTML = noteCategories.map(name => {
+    const used = notes.some(n => n.category === name);
+    return "<div class=\"category-option\"><span>" + esc(name) + (used ? " · in use" : "") + "</span><button type=\"button\" data-remove-note-category=\"" + esc(name) + "\"" + (used || noteCategories.length < 2 ? " disabled" : "") + " aria-label=\"Remove collection " + esc(name) + "\">×</button></div>";
+  }).join("");
+}
+$("noteCollections").addEventListener("click", e => {
+  if (e.target.closest("[data-open-note-categories]")) { $("noteCategoryManager").hidden = !$("noteCategoryManager").hidden; return; }
+  const b = e.target.closest("[data-note-filter]"); if (!b) return;
+  noteFilter = b.dataset.noteFilter; renderNotes();
+});
+$("noteCategoryForm").addEventListener("submit", e => {
+  e.preventDefault(); const input = $("newNoteCategory"); const name = input.value.trim();
+  if (!name || noteCategories.some(v => v.toLowerCase() === name.toLowerCase())) { input.setCustomValidity(name ? "That collection already exists." : "Enter a collection name."); input.reportValidity(); return; }
+  noteCategories.push(name);
+  if (saveCategories(NOTE_CATEGORIES_KEY, noteCategories)) { input.value = ""; input.setCustomValidity(""); fillCategorySelect($("noteCategory"), noteCategories, name); renderNotes(); } else noteCategories.pop();
+});
+$("newNoteCategory").addEventListener("input", e => e.target.setCustomValidity(""));
+$("noteCategoryOptions").addEventListener("click", e => {
+  const b = e.target.closest("[data-remove-note-category]"); if (!b) return;
+  const name = b.dataset.removeNoteCategory;
+  if (notes.some(n => n.category === name) || noteCategories.length < 2) return;
+  const next = noteCategories.filter(v => v !== name);
+  if (saveCategories(NOTE_CATEGORIES_KEY, next)) { noteCategories = next; if (noteFilter === name) noteFilter = "All"; renderNotes(); }
+});
 
 $("noteForm").addEventListener("submit", event => {
   event.preventDefault();
@@ -463,13 +559,6 @@ $("noteForm").addEventListener("submit", event => {
 
 $("cancelNoteEdit").addEventListener("click", resetNoteForm);
 $("noteSearch").addEventListener("input", renderNotes);
-$("noteCollections").addEventListener("click", event => {
-  const button = event.target.closest("[data-note-filter]");
-  if (!button) return;
-  noteFilter = button.dataset.noteFilter;
-  renderNotes();
-});
-
 $("notesList").addEventListener("click", event => {
   const edit = event.target.closest("[data-edit-note]");
   const pin = event.target.closest("[data-pin-note]");
@@ -523,7 +612,7 @@ $("importNotesFile").addEventListener("change", async event => {
     const previous = notes;
     notes = data.notes.map(n => ({
       id:n.id, title:n.title.slice(0,120), body:typeof n.body === "string" ? n.body.slice(0,12000) : "",
-      category:["Ideas","School","Acadeca","Projects","Reading","Reference"].includes(n.category) ? n.category : "Ideas",
+      category:typeof n.category === "string" && n.category.trim() ? n.category : "Ideas",
       pinned:Boolean(n.pinned), updatedAt:typeof n.updatedAt === "string" ? n.updatedAt : new Date().toISOString()
     }));
     if (saveNotes()) { resetNoteForm(); renderNotes(); } else { notes = previous; }
