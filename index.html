@@ -60,7 +60,6 @@
           <form id="taskForm" class="add-form">
             <input class="field" id="title" maxlength="140" placeholder="What needs your attention?" aria-label="Task name" required>
             <select class="field" id="category" aria-label="Task category"></select>
-            <button class="text-button" type="button" data-open-task-categories>Manage categories</button>
             <select class="field" id="priority" aria-label="Task priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
             <input class="field" id="deadline" type="date" aria-label="Due date" title="Optional due date">
             <button class="primary" type="submit">+ Add task</button>
@@ -70,10 +69,15 @@
             <button class="filter" data-filter="Active">Active</button>
             <button class="filter" data-filter="Today">Today</button>
             <button class="filter" data-filter="Completed">Completed</button>
-            
+            <button class="filter" type="button" data-open-task-categories>Manage categories</button>
           </div>
           <div class="task-list" id="tasks" aria-live="polite"></div>
           <p class="panel-subtitle" style="margin-top:14px">Tasks are saved in this browser on this device. Export a backup to keep a copy.</p>
+          <section class="category-manager" id="taskCategoryManager" hidden>
+            <strong>Task categories</strong><p>Customize how you organize tasks.</p>
+            <form class="category-add-form" id="taskCategoryForm"><input class="field" id="newTaskCategory" maxlength="32" placeholder="New category name" aria-label="New task category" required><button class="secondary-button" type="submit">Add</button></form>
+            <div class="category-options" id="taskCategoryOptions"></div>
+          </section>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:11px">
             <button class="text-button" id="importButton">Import backup</button>
             <input id="importFile" type="file" accept=".json,application/json" hidden>
@@ -116,12 +120,7 @@
           <div class="week-range" id="weekRange" aria-live="polite"></div>
         </div>
         <div id="weekGrid" class="week-grid" aria-label="Weekly calendar"></div>
-        <div class="week-legend" id="scheduleCategoryLegend"></div>
-          <details class="category-manager schedule-category-manager" id="scheduleCategoryManager">
-            <summary>Manage calendar types</summary><p>Add types such as Study, Break, Sports, or Music.</p>
-            <form class="category-add-form" id="scheduleCategoryForm"><input class="field" id="newScheduleCategory" maxlength="32" placeholder="New calendar type" aria-label="New calendar type" required><button class="secondary-button" type="submit">Add</button></form>
-            <div class="category-options" id="scheduleCategoryOptions"></div>
-          </details>
+        <div class="week-legend"><span><i class="schedule-dot study"></i>Study</span><span><i class="schedule-dot break"></i>Break</span><span><i class="schedule-dot activity"></i>Activity</span><span><i class="schedule-dot other"></i>Other</span></div>
         <details class="schedule-editor" id="scheduleEditor" open>
           <summary id="scheduleEditorSummary">Add a time block</summary>
           <form id="scheduleForm" class="schedule-form">
@@ -130,7 +129,7 @@
             <input class="field" id="scheduleTitle" maxlength="120" placeholder="e.g. Algebra practice" required>
             <div class="schedule-fields">
               <div><label class="field-label" for="scheduleDate">Date</label><input class="field" id="scheduleDate" type="date" required></div>
-              <div><label class="field-label" for="scheduleCategory">Type</label><select class="field" id="scheduleCategory"></select></div>
+              <div><label class="field-label" for="scheduleCategory">Type</label><select class="field" id="scheduleCategory"><option value="Study">Study</option><option value="Break">Break</option><option value="Activity">Activity</option><option value="Other">Other</option></select></div>
               <div><label class="field-label" for="scheduleStart">Starts</label><input class="field" id="scheduleStart" type="time" value="16:00" required></div>
               <div><label class="field-label" for="scheduleEnd">Ends</label><input class="field" id="scheduleEnd" type="time" value="16:30" required></div>
             </div>
@@ -139,12 +138,7 @@
         </details>
       </section>
       <section class="panel agenda-panel"><div class="panel-head"><div><h2>Agenda</h2><p class="panel-subtitle">A compact list of what's scheduled, in time order.</p></div><span id="agendaCount" class="agenda-count"></span></div><div id="weekAgenda" class="week-agenda" aria-live="polite"></div></section>
-      <section class="panel"><div class="panel-head"><div><h2>What's on your plate?</h2><p class="panel-subtitle">Your tasks, ordered by what needs attention.</p></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="text-button" type="button" data-open-task-categories>Manage categories</button><button class="text-button" data-goto="overview">Add a task ↗</button></div></div><div id="plannerSummary"></div><div class="planner-controls"><label class="field-label" for="plannerView">Show</label><select class="field" id="plannerView"><option value="upcoming">Upcoming &amp; overdue</option><option value="all">All tasks</option><option value="completed">Completed</option></select></div><div id="plannerTasks" class="task-list" aria-live="polite"></div>          <section class="category-manager" id="taskCategoryManager" hidden>
-            <strong>Task categories</strong><p>Customize how you organize tasks.</p>
-            <form class="category-add-form" id="taskCategoryForm"><input class="field" id="newTaskCategory" maxlength="32" placeholder="New category name" aria-label="New task category" required><button class="secondary-button" type="submit">Add</button></form>
-            <div class="category-options" id="taskCategoryOptions"></div>
-          </section>
-</section>
+      <section class="panel"><div class="panel-head"><div><h2>What's on your plate?</h2><p class="panel-subtitle">Your tasks, ordered by what needs attention.</p></div><button class="text-button" data-goto="overview">Add a task ↗</button></div><div id="plannerSummary"></div><div class="planner-controls"><label class="field-label" for="plannerView">Show</label><select class="field" id="plannerView"><option value="upcoming">Upcoming &amp; overdue</option><option value="all">All tasks</option><option value="completed">Completed</option></select></div><div id="plannerTasks" class="task-list" aria-live="polite"></div></section>
     </section>
 
     <section class="page-panel" id="page-library">
