@@ -65,7 +65,7 @@
 
   $("addTaskCategory").addEventListener("click", () => {
     const input = $("newTaskCategory");
-    const name = input.value.trim().replace(/\\s+/g, " ");
+    const name = input.value.trim().replace(/\s+/g, " ");
     const status = $("taskCategoryStatus");
     if (!name) { status.textContent = "Enter a category name."; input.focus(); return; }
     if (taskCategories.some(category => category.toLocaleLowerCase() === name.toLocaleLowerCase())) { status.textContent = "That category already exists."; input.focus(); return; }
