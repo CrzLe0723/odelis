@@ -270,3 +270,9 @@
   .agenda-title { grid-column:1 / 3; grid-row:3; }
   .agenda-actions { grid-column:3; grid-row:3; }
 }
+
+
+/* Task category controls */
+.category-tools { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
+.category-tools .field { flex:1 1 170px; min-width:0; }
+.category-status { color:var(--muted); font-size:11px; flex-basis:100%; }
