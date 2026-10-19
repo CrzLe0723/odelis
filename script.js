@@ -1,7 +1,21 @@
   const KEY = "odelis-tasks-v1";
   const LEGACY_KEY = "studyos-tasks-v1";
+  const CATEGORY_KEY = "odelis-task-categories-v1";
+  const DEFAULT_CATEGORIES = ["School", "Personal", "Project", "Other"];
   const $ = id => document.getElementById(id);
+  function loadTaskCategories() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CATEGORY_KEY) || "null");
+      return Array.isArray(saved) ? [...new Set([...DEFAULT_CATEGORIES, ...saved.filter(c => typeof c === "string" && c.trim()).map(c => c.trim()).slice(0, 100)])] : [...DEFAULT_CATEGORIES];
+    } catch { return [...DEFAULT_CATEGORIES]; }
+  }
+  let taskCategories = loadTaskCategories();
   let tasks = load();
+  tasks.forEach(task => { if (task.category && !taskCategories.includes(task.category)) taskCategories.push(task.category); });
+  function saveTaskCategories() {
+    try { localStorage.setItem(CATEGORY_KEY, JSON.stringify(taskCategories)); return true; }
+    catch { alert("Odelis could not save your categories in this browser."); return false; }
+  }
   let filter = "All";
 
   function load() {
@@ -10,7 +24,7 @@
       const old = current === null ? localStorage.getItem(LEGACY_KEY) : null;
       const data = JSON.parse(current ?? old ?? "[]");
       return Array.isArray(data) ? data.filter(t => t && typeof t.id === "string" && typeof t.title === "string").map(t => ({
-        id: t.id, title: t.title, category: ["School","Acadeca","Personal","Project","Other","Sports"].includes(t.category) ? t.category : "Other",
+        id: t.id, title: t.title, category: typeof t.category === "string" && t.category.trim() ? t.category.trim() : "Other",
         priority: ["High","Medium","Low"].includes(t.priority) ? t.priority : "Medium",
         deadline: typeof t.deadline === "string" ? t.deadline : "",
         duration: Number.isFinite(Number(t.duration)) ? Number(t.duration) : 30,
@@ -37,6 +51,36 @@
 
   $("today").textContent = new Date().toLocaleDateString(undefined, {weekday:"long", month:"long", day:"numeric"});
   if (localStorage.getItem(KEY) === null && localStorage.getItem(LEGACY_KEY) !== null) save();
+
+  function renderTaskCategories() {
+    const select = $("category");
+    const selected = select.value;
+    select.innerHTML = taskCategories.map(category => `<option value="${esc(category)}">${esc(category)}</option>`).join("");
+    select.value = taskCategories.includes(selected) ? selected : taskCategories[0];
+    const standard = ["All", "Active", "Today", "Completed"];
+    const buttons = standard.map(value => `<button class="filter ${filter === value ? "active" : ""}" data-filter="${value}">${value}</button>`);
+    taskCategories.forEach(category => buttons.push(`<button class="filter ${filter === category ? "active" : ""}" data-filter="${esc(category)}">${esc(category)}</button>`));
+    $("filters").innerHTML = buttons.join("");
+  }
+
+  $("addTaskCategory").addEventListener("click", () => {
+    const input = $("newTaskCategory");
+    const name = input.value.trim().replace(/\s+/g, " ");
+    const status = $("taskCategoryStatus");
+    if (!name) { status.textContent = "Enter a category name."; input.focus(); return; }
+    if (taskCategories.some(category => category.toLocaleLowerCase() === name.toLocaleLowerCase())) { status.textContent = "That category already exists."; input.focus(); return; }
+    if (taskCategories.length >= 100) { status.textContent = "Category limit reached."; return; }
+    taskCategories.push(name);
+    if (!saveTaskCategories()) { taskCategories.pop(); return; }
+    input.value = "";
+    status.textContent = `Added “${name}”.`;
+    renderTaskCategories();
+    $("category").value = name;
+    input.focus();
+  });
+  $("newTaskCategory").addEventListener("keydown", event => {
+    if (event.key === "Enter") { event.preventDefault(); $("addTaskCategory").click(); }
+  });
 
   $("taskForm").addEventListener("submit", e => {
     e.preventDefault();
@@ -95,6 +139,7 @@
   });
 
   function render() {
+    renderTaskCategories();
     const today = todayString();
     const active = tasks.filter(t => !t.done);
     $("total").textContent = active.length;
@@ -106,7 +151,7 @@
       if (filter === "Active") return !t.done;
       if (filter === "Completed") return t.done;
       if (filter === "Today") return !t.done && t.deadline === today;
-      if (["School","Acadeca","Personal","Project","Other","Sports"].includes(filter)) return t.category === filter;
+      if (taskCategories.includes(filter)) return t.category === filter;
       return true;
     }).sort((a,b) => {
       if (a.done !== b.done) return Number(a.done)-Number(b.done);

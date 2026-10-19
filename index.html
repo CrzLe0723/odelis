@@ -57,6 +57,11 @@
             <div><h2>Task list</h2><p class="panel-subtitle">Keep the next step in sight.</p></div>
             <button class="text-button" id="export">Export ↗</button>
           </div>
+          <div class="category-tools" aria-label="Manage task categories">
+            <input class="field" id="newTaskCategory" maxlength="40" placeholder="New category name" aria-label="New task category name">
+            <button class="text-button" id="addTaskCategory" type="button">+ Add category</button>
+            <span id="taskCategoryStatus" class="category-status" aria-live="polite"></span>
+          </div>
           <form id="taskForm" class="add-form">
             <input class="field" id="title" maxlength="140" placeholder="What needs your attention?" aria-label="Task name" required>
             <select class="field" id="category" aria-label="Task category">
